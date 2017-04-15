@@ -46,7 +46,7 @@ ARG PUID=1000
 ARG PGID=1000
 RUN groupadd -g $PGID cloudestuary \
   && useradd -u $PUID -g cloudestuary -m cloudestuary -s /bin/bash -d /var/www \
-  && chown cloudestuary:cloudestuary /var/www
+  && chown -R cloudestuary:cloudestuary /var/www
 
 # Prepare ssh user
 RUN mkdir /var/run/sshd
