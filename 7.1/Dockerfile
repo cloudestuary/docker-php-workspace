@@ -45,5 +45,7 @@ EXPOSE 22
 
 ENV NOTVISIBLE "in users profile"
 
-ENTRYPOINT "docker-php-entrypoint && entrypoint.ssh"
+ADD entrypoint.ssh /usl/local/bin/entrypoint
+
+ENTRYPOINT "docker-php-entrypoint && entrypoint"
 CMD ["/usr/sbin/sshd", "-D"]
