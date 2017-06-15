@@ -41,25 +41,9 @@ RUN curl -o /tmp/composer-setup.php https://getcomposer.org/installer \
   && php -r "unlink('/tmp/composer-setup.php');" \
   && mv composer.phar /usr/local/bin/composer
 
-
-ARG PUID=1000
-ARG PGID=1000
-RUN groupadd -g $PGID cloudestuary \
-  && useradd -u $PUID -g cloudestuary -m cloudestuary -s /bin/bash -d /var/www \
-  && chown -R cloudestuary:cloudestuary /var/www
-
-# Prepare ssh user
-RUN mkdir /var/run/sshd
-RUN echo 'cloudestuary:secret' | chpasswd \
-  && echo 'AllowUsers cloudestuary' >> /etc/ssh/sshd_config
-
-# SSH login fix. Otherwise user is kicked off after login
-RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+EXPOSE 22
 
 ENV NOTVISIBLE "in users profile"
-RUN echo "export VISIBLE=now" >> /etc/profile
 
-RUN . ~/.bashrc
-
-EXPOSE 22
+ENTRYPOINT "docker-php-entrypoint && entrypoint.ssh"
 CMD ["/usr/sbin/sshd", "-D"]
