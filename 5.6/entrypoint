@@ -20,6 +20,8 @@ else
 	useradd -u $PUID -g cloudestuary -m cloudestuary -s /bin/bash -d /var/www
 fi
 
+echo 'cloudestuary:'$PASSWORD | chpasswd -e
+
 chown -R cloudestuary:cloudestuary /var/www
 
 exec "$@"
