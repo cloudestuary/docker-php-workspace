@@ -41,25 +41,64 @@ RUN curl -o /tmp/composer-setup.php https://getcomposer.org/installer \
   && php -r "unlink('/tmp/composer-setup.php');" \
   && mv composer.phar /usr/local/bin/composer
 
+# Setup node and yarn
+RUN set -ex \
+  && for key in \
+    9554F04D7259F04124DE6B476D5A82AC7E37093B \
+    94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
+    FD3A5288F042B6850C66B31F09FE44734EB7990E \
+    71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
+    DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
+    B9AE9905FFD7803F25714661B63B535A4C206CA9 \
+    C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
+    56730D5401028683275BD23C23EFEFE93C4CFFFE \
+  ; do \
+    gpg --keyserver pgp.mit.edu --recv-keys "$key" || \
+    gpg --keyserver keyserver.pgp.com --recv-keys "$key" || \
+    gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key" ; \
+  done
 
-ARG PUID=1000
-ARG PGID=1000
-RUN groupadd -g $PGID cloudestuary \
-  && useradd -u $PUID -g cloudestuary -m cloudestuary -s /bin/bash -d /var/www \
-  && chown -R cloudestuary:cloudestuary /var/www
+ENV NPM_CONFIG_LOGLEVEL info
+ENV NODE_VERSION 8.1.2
 
-# Prepare ssh user
-RUN mkdir /var/run/sshd
-RUN echo 'cloudestuary:secret' | chpasswd \
-  && echo 'AllowUsers cloudestuary' >> /etc/ssh/sshd_config
+RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
+&& curl -SLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
+&& gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
+&& grep " node-v$NODE_VERSION-linux-x64.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
+&& tar -xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
+&& rm "node-v$NODE_VERSION-linux-x64.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
+&& ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
-# SSH login fix. Otherwise user is kicked off after login
-RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+ENV YARN_VERSION 0.24.6
 
-ENV NOTVISIBLE "in users profile"
-RUN echo "export VISIBLE=now" >> /etc/profile
+RUN set -ex \
+&& for key in \
+  6A010C5166006599AA17F08146C2130DFD2497F5 \
+; do \
+  gpg --keyserver pgp.mit.edu --recv-keys "$key" || \
+  gpg --keyserver keyserver.pgp.com --recv-keys "$key" || \
+  gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key" ; \
+done \
+&& curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
+&& curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc" \
+&& gpg --batch --verify yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
+&& mkdir -p /opt/yarn \
+&& tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/yarn --strip-components=1 \
+&& ln -s /opt/yarn/bin/yarn /usr/local/bin/yarn \
+&& ln -s /opt/yarn/bin/yarn /usr/local/bin/yarnpkg \
+&& rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz
 
-RUN . ~/.bashrc
+# Setup WP-CLI
+RUN curl -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
+&& chmod +x /usr/local/bin/wp
 
 EXPOSE 22
+
+ENV NOTVISIBLE "in users profile"
+
+COPY entrypoint /usr/local/bin/
+
+WORKDIR /var/www/
+
+ENTRYPOINT ["entrypoint"]
 CMD ["/usr/sbin/sshd", "-D"]

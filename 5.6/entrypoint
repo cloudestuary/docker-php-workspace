@@ -1,0 +1,36 @@
+#!/bin/sh
+set -e
+
+# first arg is `-f` or `--some-option`
+if [ "${1#-}" != "$1" ]; then
+	set -- php "$@"
+fi
+
+PASSWORD=${SSH_PASSWORD:-$(openssl passwd -crypt secret)}
+
+if [ -n "$HOSTED" ]; then
+	usermod -l cloudestuary www-data
+  groupmod -n cloudestuary www-data
+  usermod -d /var/www -s /bin/bash -m cloudestuary
+	chown cloudestuary:cloudestuary /var/www
+else
+	PUID=${PUID:-1000}
+	PGID=${PGID:-1000}
+
+	groupadd -g $PGID cloudestuary
+	useradd -u $PUID -g cloudestuary -m cloudestuary -s /bin/bash -d /var/www
+	chown -R cloudestuary:cloudestuary /var/www
+fi
+
+# Prepare ssh user
+mkdir /var/run/sshd
+echo 'cloudestuary:'$PASSWORD | chpasswd -e
+
+echo 'AllowUsers cloudestuary' >> /etc/ssh/sshd_config
+
+# SSH login fix. Otherwise user is kicked off after login
+sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+echo "export VISIBLE=now" >> /etc/profile
+
+exec "$@"
