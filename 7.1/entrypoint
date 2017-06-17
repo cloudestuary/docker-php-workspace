@@ -8,9 +8,11 @@ fi
 
 PASSWORD=${SSH_PASSWORD:-$(openssl passwd -crypt secret)}
 
-if [ [-n "$HOSTED"] && [getent passwd cloudestuary > /dev/null 2>&1] ]; then
-	usermod -l cloudestuary www-data
-  groupmod -n cloudestuary www-data
+if [ [-n "$HOSTED"]; then
+	if [ [getent passwd cloudestuary > /dev/null 2>&1] ]; then
+		usermod -l cloudestuary www-data
+	  groupmod -n cloudestuary www-data
+	fi
   usermod -d /var/www -s /bin/bash -m cloudestuary
 else
 	PUID=${PUID:-1000}
