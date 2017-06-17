@@ -12,15 +12,15 @@ if [ -n "$HOSTED" ]; then
 	usermod -l cloudestuary www-data
   groupmod -n cloudestuary www-data
   usermod -d /var/www -s /bin/bash -m cloudestuary
-	chown cloudestuary:cloudestuary /var/www
 else
 	PUID=${PUID:-1000}
 	PGID=${PGID:-1000}
 
 	groupadd -g $PGID cloudestuary
 	useradd -u $PUID -g cloudestuary -m cloudestuary -s /bin/bash -d /var/www
-	chown -R cloudestuary:cloudestuary /var/www
 fi
+
+chown -R cloudestuary:cloudestuary /var/www
 
 # Prepare ssh user
 mkdir /var/run/sshd
