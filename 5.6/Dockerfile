@@ -20,6 +20,8 @@ RUN apt-get update && \
         vim \
         nano \
         postgresql-client \
+        less \
+        mysql-client \
         locales \
 && apt-get clean
 

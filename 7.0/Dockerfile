@@ -20,6 +20,8 @@ RUN apt-get update && \
         vim \
         nano \
         postgresql-client \
+        less \
+        mysql-client \
         locales \
 && apt-get clean
 
@@ -62,35 +64,35 @@ ENV NPM_CONFIG_LOGLEVEL info
 ENV NODE_VERSION 8.1.2
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
-&& curl -SLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
-&& gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
-&& grep " node-v$NODE_VERSION-linux-x64.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
-&& tar -xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
-&& rm "node-v$NODE_VERSION-linux-x64.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
-&& ln -s /usr/local/bin/node /usr/local/bin/nodejs
+  && curl -SLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
+  && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
+  && grep " node-v$NODE_VERSION-linux-x64.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
+  && tar -xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 \
+  && rm "node-v$NODE_VERSION-linux-x64.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
+  && ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 ENV YARN_VERSION 0.24.6
 
 RUN set -ex \
-&& for key in \
-  6A010C5166006599AA17F08146C2130DFD2497F5 \
-; do \
-  gpg --keyserver pgp.mit.edu --recv-keys "$key" || \
-  gpg --keyserver keyserver.pgp.com --recv-keys "$key" || \
-  gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key" ; \
-done \
-&& curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
-&& curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc" \
-&& gpg --batch --verify yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
-&& mkdir -p /opt/yarn \
-&& tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/yarn --strip-components=1 \
-&& ln -s /opt/yarn/bin/yarn /usr/local/bin/yarn \
-&& ln -s /opt/yarn/bin/yarn /usr/local/bin/yarnpkg \
-&& rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz
+  && for key in \
+    6A010C5166006599AA17F08146C2130DFD2497F5 \
+  ; do \
+    gpg --keyserver pgp.mit.edu --recv-keys "$key" || \
+    gpg --keyserver keyserver.pgp.com --recv-keys "$key" || \
+    gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$key" ; \
+  done \
+    && curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
+    && curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc" \
+    && gpg --batch --verify yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
+    && mkdir -p /opt/yarn \
+    && tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/yarn --strip-components=1 \
+    && ln -s /opt/yarn/bin/yarn /usr/local/bin/yarn \
+    && ln -s /opt/yarn/bin/yarn /usr/local/bin/yarnpkg \
+    && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz
 
 # Setup WP-CLI
 RUN curl -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
-&& chmod +x /usr/local/bin/wp
+  && chmod +x /usr/local/bin/wp
 
 EXPOSE 22
 
