@@ -8,12 +8,10 @@ fi
 
 PASSWORD=${SSH_PASSWORD:-$(openssl passwd -crypt secret)}
 
-if [ [-n "$HOSTED"]; then
-	if [ [getent passwd cloudestuary > /dev/null 2>&1] ]; then
-		usermod -l cloudestuary www-data
-	  groupmod -n cloudestuary www-data
-	fi
-  usermod -d /var/www -s /bin/bash -m cloudestuary
+if [ -n "$HOSTED" ]; then
+	usermod -l cloudestuary www-data || true
+  groupmod -n cloudestuary www-data || true
+  usermod -d /var/www -s /bin/bash -m cloudestuary || true
 else
 	PUID=${PUID:-1000}
 	PGID=${PGID:-1000}
@@ -23,16 +21,5 @@ else
 fi
 
 chown -R cloudestuary:cloudestuary /var/www
-
-# Prepare ssh user
-mkdir /var/run/sshd
-echo 'cloudestuary:'$PASSWORD | chpasswd -e
-
-echo 'AllowUsers cloudestuary' >> /etc/ssh/sshd_config
-
-# SSH login fix. Otherwise user is kicked off after login
-sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
-
-echo "export VISIBLE=now" >> /etc/profile
 
 exec "$@"
